@@ -1,0 +1,9 @@
+# @import ./variablesInit.http
+###
+POST /attendence/in
+Content-Type: application/json
+
+{
+    "studentId":"HS-123465",
+    
+}

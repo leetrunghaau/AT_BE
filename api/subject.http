@@ -1,0 +1,23 @@
+
+# @import ./variablesInit.http
+
+###
+
+
+###
+
+GET /subjects
+
+
+###
+
+PUT /subjects/ENG-201
+Content-Type: application/json
+
+{
+    "color": "Yellow"
+}
+
+
+
+

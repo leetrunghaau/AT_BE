@@ -1,0 +1,107 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client",
+  output   = "../src/generated/prisma"
+
+}
+
+enum Direction {
+  IN
+  OUT
+}
+
+// Model cho Lớp học (ví dụ: 10A1, 11B3)
+model SchoolClass {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  grade          Int             @default(10)
+  students       Student[]
+  attendanceLogs AttendanceLog[]
+}
+
+
+enum Status {
+  present    
+  absent    
+  late      
+  off_hours  
+}
+// Model cho Sinh viên
+model Student {
+  id             String          @id @default(cuid())
+  name           String
+  phone          String?
+  phoneParent    String?
+  classId        String
+  schoolClass    SchoolClass     @relation(fields: [classId], references: [id])
+  attendanceLogs AttendanceLog[]
+   status         Status          @default(off_hours)
+}
+
+enum Color {
+  Blue
+  Green
+  Purple
+  Yellow
+  Orange
+  Red
+  Pink
+  Indigo
+}
+
+// Model cho Môn học
+model Subject {
+  id               String           @id
+  name             String
+  color            Color
+  teachers         Teacher[]        @relation("TeacherToSubject")
+  attendanceLogs   AttendanceLog[]
+  timetableEntries TimetableEntry[]
+}
+
+// Model cho Giáo viên
+model Teacher {
+  id               String           @id @default(cuid())
+  name             String
+  email            String?          @unique
+  phone            String?
+  subjects         Subject[]        @relation("TeacherToSubject")
+  attendanceLogs   AttendanceLog[]
+  timetableEntries TimetableEntry[]
+}
+
+model TimetableEntry {
+  id        String   @id @default(cuid())
+  classId   String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  teacherId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  dayOfWeek Int
+  period    Int
+
+  @@unique([classId, dayOfWeek, period])
+}
+
+model AttendanceLog {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  classId     String
+  schoolClass SchoolClass @relation(fields: [classId], references: [id])
+
+  logTime DateTime @default(now())
+  direction Direction
+
+  @@unique([studentId, subjectId, classId])
+}

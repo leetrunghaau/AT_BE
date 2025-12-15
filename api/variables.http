@@ -1,0 +1,5 @@
+# Fill in these variables with existing IDs from your database
+# You can get these by running the student.http and other test files.
+
+@studentId = 019a7fcf-8076-7de6-a412-4bd19dab6757
+@classMeetingId = 019a7fcf-8076-7de6-a412-4bd19dab6758

@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Direction {
+  IN
+  OUT
+}
+
+// Model cho Lớp học (ví dụ: 10A1, 11B3)
+model SchoolClass {
+  id               String           @id @default(cuid())
+  name             String           @unique
+  grade            Int              @default(10)
+  students         Student[]
+  studentLogs      StudentLog[]
+  active           Boolean          @default(true)
+  teacherLogs      TeacherLog[]
+  drivers          Driver[]
+  timetableEntries TimetableEntry[]
+}
+
+enum Status {
+  present
+  absent
+  late
+  off_hours
+}
+
+// Model cho Sinh viên
+model Student {
+  id                String             @id @default(cuid())
+  name              String
+  phone             String?
+  phoneParent       String?
+  gender            Gender?
+  classId           String
+  trained           Boolean            @default(false)
+  schoolClass       SchoolClass        @relation(fields: [classId], references: [id])
+  studentLogs       StudentLog[]
+  studentAttendants StudentAttendant[]
+}
+
+enum Color {
+  Blue
+  Green
+  Purple
+  Yellow
+  Orange
+  Red
+  Pink
+  Indigo
+}
+
+enum Gender {
+  male
+  female
+}
+
+// Model cho Môn học
+model Subject {
+  id               String           @id
+  name             String
+  color            Color
+  teachers         Teacher[]        @relation("TeacherToSubject")
+  timetableEntries TimetableEntry[]
+}
+
+// Model cho Giáo viên
+model Teacher {
+  id                String             @id @default(cuid())
+  name              String
+  email             String?            @unique
+  gender            Gender?
+  phone             String?
+  trained           Boolean            @default(false)
+  subjects          Subject[]          @relation("TeacherToSubject")
+  timetableEntries  TimetableEntry[]
+  teacherLogs       TeacherLog[]
+  teacherAttendants TeacherAttendant[]
+}
+
+model TimetableEntry {
+  id          String      @id @default(cuid())
+  classId     String
+  schoolClass SchoolClass @relation(fields: [classId], references: [id])
+  subjectId   String
+  subject     Subject     @relation(fields: [subjectId], references: [id])
+  teacherId   String
+  teacher     Teacher     @relation(fields: [teacherId], references: [id])
+  startDate   DateTime?
+  endDate     DateTime?
+  dayOfWeek   Int
+  period      Int
+
+  @@unique([classId, dayOfWeek, period, startDate, endDate])
+}
+
+model StudentLog {
+  id String @id @default(cuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  classId     String
+  schoolClass SchoolClass @relation(fields: [classId], references: [id])
+
+  logTime   DateTime  @default(now())
+  direction Direction
+}
+
+model TeacherLog {
+  id String @id @default(cuid())
+
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  classId     String
+  schoolClass SchoolClass? @relation(fields: [classId], references: [id])
+
+  logTime   DateTime  @default(now())
+  direction Direction
+}
+
+model Driver {
+  id          String      @id @default(cuid())
+  name        String
+  classId     String
+  schoolClass SchoolClass @relation(fields: [classId], references: [id])
+}
+
+model StudentAttendant {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  status    Status   @default(off_hours)
+  timeTemp  DateTime @default(now())
+
+  @@unique([studentId, timeTemp])
+}
+
+model TeacherAttendant {
+  id        String   @id @default(cuid())
+  teacherId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  status    Status   @default(off_hours)
+  timeTemp  DateTime @default(now())
+
+  @@unique([teacherId, timeTemp])
+}

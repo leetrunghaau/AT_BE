@@ -1,0 +1,45 @@
+{
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.19.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.0.0",
+    "@prisma/client": "^6.19.0",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "form-data": "^4.0.5",
+    "http-errors": "^2.0.0",
+    "joi": "^18.0.1",
+    "module-alias": "^2.2.3",
+    "uuid": "^13.0.0",
+    "yamljs": "^0.3.0"
+  },
+  "name": "be",
+  "description": "Dự án này là một hệ thống API back-end được xây dựng bằng Express.js và Prisma, với mục tiêu tự động hóa việc điểm danh trong lớp học. Hệ thống sử dụng dữ liệu từ một cảm biến giả định để ghi nhận khi sinh viên vào hoặc ra khỏi lớp, từ đó cung cấp các thống kê chi tiết về sự hiện diện của sinh viên.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/server.js",
+    "seed": "node prisma/seed.js",
+    "ge": "npx prisma generate",
+    "push": "npx prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "_moduleAliases": {
+    "@": ".",
+    "@services": "src/api/services",
+    "@controls": "src/api/controllers",
+    "@valis": "src/api/validations",
+    "@routers": "src/api/routes",
+    "@mids": "src/api/middlewares"
+  }
+}

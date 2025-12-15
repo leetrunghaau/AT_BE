@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "./*"
+            ],
+            "@services/*": [
+                "src/api/services/*"
+            ],
+            "@controls/*": [
+                "src/api/controllers/*"
+            ],
+            "@valis/*": [
+                "src/api/validations/*"
+            ],
+            "@routers/*": [
+                "src/api/routes/*"
+            ],
+            "@mids/*": [
+                "src/api/middlewares/*"
+            ]
+        }
+    }
+}

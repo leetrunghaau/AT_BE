@@ -1,0 +1,61 @@
+# @import ./variablesInit.http
+
+###
+GET /teachers?p=1
+###
+GET /teachers/018f6c4a-9b5d-772b-8f3a-b2e45c0d8ae2
+
+###
+POST /teachers
+Content-Type: application/json
+
+{
+  "id": "019a7fcf-8076-7de6-a412-4bd19dab6758",
+  "name": "Class 6",
+  "email": "haussss@gmail.com",
+  "subjects": ["HIST-450", "MATH-240", "MATH-240"]
+}
+
+PUT /teachers/019a7fcf-8076-7de6-a412-4bd19dab6758
+Content-Type: application/json
+
+{
+  "name": "hau2",
+  "email": "hausjhgss@gmail.com",
+  "subjects": ["HIST-450", "MATH-240", "MATH-240"]
+}
+
+###
+POST /teachers/bulk
+Content-Type: application/json
+[
+    {
+      "id": "019a801e-a130-7c0a-8f4e-f2c64cb7cd11",
+      "name": "Hậu",
+      "email": "hdau@gmail.com",
+      "subjects": ["HIST-450", "MATH-240", "MATH-240"]
+    },
+    {
+      "id": "019a801e-a132-7b4c-a130-65e4af9cd7a2",
+      "name": "Linh",
+      "email": "lidnh.tran@example.com"
+    },
+    {
+      "id": "019a801e-a133-70de-9dd1-216b9b4a0cc3",
+      "name": "Nam",
+      "email": "ndam.pham@example.com"
+    },
+    {
+      "id": "019a801e-a134-7e31-bcd2-74fbc0f3d982",
+      "name": "Hương",
+      "email": "hduong.le@example.com",
+      "subjects": ["HIST-450", "MATH-240", "MATH-240"]
+    },
+    {
+      "id": "019a801e-a135-73ac-8a4e-98142cc7dc11",
+      "name": "Minh",
+      "email": "midnh.do@example.com"
+    }
+  ]
+###
+DELETE /teachers/019a7fcf-8076-7de6-a412-4bd19dab6758

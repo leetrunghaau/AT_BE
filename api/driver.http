@@ -1,0 +1,24 @@
+
+# @import ./variablesInit.http
+###
+POST /drivers
+Content-Type: application/json
+
+{
+  "id": "019a7fcf-8076-7de6-a412-4bd19dab6758",
+  "name": "Lê trung Hậu",
+  "phone": "036701672",
+  "phoneParent": "0367016872",
+  "classId": "019a7fcf-8076-7de6-a412-4bd19dab6758"
+}
+GET /drivers?l=5
+
+###
+
+GET /drivers/019a7fcf-8076-7de6-a412-4bd19dab6758
+
+###
+
+DELETE /students/019a7fcf-8076-7de6-a412-4bd19dab6799
+
+###

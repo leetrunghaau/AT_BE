@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: be-at2-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      # Mount the SQLite database file to persist data
+      - ./dev.db:/app/dev.db
+      # Mount the public data directory
+      - ./public/data:/app/public/data
+      # Mount the source code for development (optional, enables hot-reloading)
+      # - ./src:/app/src
+    networks:
+      - at2-network
+
+networks:
+  at2-network:
+    driver: bridge

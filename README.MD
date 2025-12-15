@@ -35,24 +35,36 @@ Follow these instructions to get the project up and running on your local machin
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root directory by copying the example.
-    ```bash
-    # You can just create a .env file
-    ```
-    Then, add the required environment variables to the `.env` file. This configures Prisma to use a local SQLite database and sets the server port.
+    Create a `.env` file in the root directory and add the following content. This file configures the database path, server port, and other necessary settings.
     ```env
-    # Database URL for Prisma
-    DATABASE_URL="file:./prisma/dev.db"
+    # Database URL for Prisma (points to the db file in the root)
+    DATABASE_URL="file:./dev.db"
 
     # Server port
-    PORT=3000
+    PORT=5000
+
+    # Base URL for the AI service
+    AI_BASE_URL="http://localhost:8000"
     ```
 
-4.  **Run database migrations:**
-    This command creates the SQLite database file (`dev.db`) and sets up the schema defined in `prisma/schema.prisma`.
+4.  **Setup the Database:**
+    These commands will create the SQLite database file and generate the Prisma Client based on your schema.
+
+    a. **Create the database file:**
+    First, create an empty database file named `dev.db` inside the `prisma` directory.
+
+    b. **Generate Prisma Client:**
+    This command reads your `schema.prisma` and generates the Prisma Client library tailored to your models.
     ```bash
-    npx prisma migrate dev
+    npx prisma generate
     ```
+
+    c. **Push the schema to the database:**
+    This command will synchronize your database schema with your Prisma schema, creating the tables.
+    ```bash
+    npx prisma db push
+    ```
+    *Note: `db push` is great for prototyping. For production and team workflows that require tracking schema changes, consider using `npx prisma migrate dev`.*
 
 5.  **(Optional) Seed the database:**
     To populate the database with initial data for testing, run the seed script.
@@ -67,6 +79,79 @@ To start the development server with live-reloading (thanks to `nodemon`), run:
 npm start
 ```
 The server will be available at `http://localhost:3000`.
+
+## Docker Support
+
+This project includes a `Dockerfile` and a `docker-compose.yml` file to make it easy to build and run the application in a containerized environment.
+
+### Method 1: Using Docker Compose (Recommended)
+
+Docker Compose is the recommended way to run the application as it simplifies the management of ports, environment variables, and volumes for data persistence.
+
+**Start the application:**
+To build the image and start the container, run:
+```bash
+docker-compose up --build
+```
+To run in the background (detached mode), use:
+```bash
+docker-compose up -d --build
+```
+
+**Stop the application:**
+To stop the container, run:
+```bash
+docker-compose down
+```
+
+The `docker-compose.yml` file is configured to automatically persist the data in `dev.db` and the `public/data` directory by mounting them as volumes.
+
+### Method 2: Using Docker Manually
+
+If you prefer not to use Docker Compose, you can build and run the container manually.
+
+**1. Build the Docker Image:**
+```bash
+docker build -t be-at2 .
+```
+
+**2. Run the Docker Container:**
+```bash
+docker run -d -p 5000:5000 --name be-at2-container --env-file .env be-at2
+```
+*   **Note:** This manual method does not persist the database. Any data will be lost if the container is removed.
+
+### Triển khai vào Docker Compose tổng
+
+Nếu bạn đang chạy nhiều service trên máy chủ và quản lý bằng một tệp `docker-compose.yml` tổng, bạn có thể sao chép đoạn mã dưới đây và dán vào tệp đó.
+
+**Lưu ý:** Bạn cần chỉnh sửa các đường dẫn (`build`, `env_file`, `volumes`) và tên `networks` cho phù hợp với cấu trúc thư mục và thiết lập trên máy chủ của bạn.
+
+```yaml
+# --- Service cho BE-AT2 ---
+services:
+  backend-at2: # Đặt một tên duy nhất cho service
+    build: ./path/to/your/BE-project # THAY ĐỔI: Đường dẫn đến thư mục project này
+    container_name: be-at2-backend
+    env_file:
+      - ./path/to/your/BE-project/.env # THAY ĐỔI: Đường dẫn đến tệp .env
+    volumes:
+      # Volume để lưu trữ database và các dữ liệu khác
+      # THAY ĐỔI: Đường dẫn bên trái dấu hai chấm (:) là đường dẫn trên máy chủ của bạn
+      - ./your-data/at2/dev.db:/app/dev.db
+      - ./your-data/at2/public/data:/app/public/data
+    networks:
+      - your-shared-network # THAY ĐỔI: Tên network chung của các service
+    ports:
+      - "5000:5000" # THAY ĐỔI: Ánh xạ cổng nếu cần
+    restart: unless-stopped
+
+# ... các service khác của bạn ...
+
+# networks:
+#   your-shared-network:
+#     external: true # Hoặc định nghĩa network tại đây
+```
 
 ## Project Structure
 

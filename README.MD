@@ -1,43 +1,79 @@
-# BE-AT2 - Student Attendance API
+# Student Attendance API System
 
-This is the backend API for a student attendance system, built with Node.js, Express, and Prisma. The system is designed to automate class attendance by processing data from a hypothetical sensor to log when students enter or leave a classroom, providing detailed attendance statistics.
+![License](https://img.shields.io/badge/license-ISC-blue.svg)
 
-## Features
+A backend API for an automated attendance system, built with Node.js, Express, and Prisma. The system is designed to automate classroom attendance by processing sensor data to log when students enter or leave, providing detailed statistics.
 
--   **Class Management**: CRUD operations for classes.
--   **Student Management**: CRUD operations for students.
--   **Subject Management**: CRUD operations for subjects.
--   **Attendance Tracking**: APIs to log student attendance.
--   **Dynamic API Validation**: Robust request validation using Joi.
--   **Centralized Response & Error Handling**.
--   **Pagination & Filtering** for list endpoints.
+---
 
-## Getting Started
+## 📜 Table of Contents
 
-Follow these instructions to get the project up and running on your local machine for development and testing purposes.
+- [About The Project](#about-the-project)
+  - [Key Features](#key-features)
+  - [Built With](#built-with)
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation Guide](#installation-guide)
+- [🏃‍♂️ Usage](#-usage)
+  - [Running the Application](#running-the-application)
+  - [API Endpoints](#api-endpoints)
+- [🐳 Docker](#-docker)
+  - [Using Docker Compose (Recommended)](#using-docker-compose-recommended)
+  - [Using Docker Manually](#using-docker-manually)
+  - [Template for Master Docker Compose](#template-for-master-docker-compose)
+- [📂 Project Structure](#-project-structure)
+- [⚖️ License](#️-license)
+
+---
+
+## About The Project
+
+This project provides a comprehensive backend solution for managing and automating attendance. By integrating with hypothetical sensors, the system can track student presence accurately and efficiently.
+
+### Key Features
+
+-   **CRUD Operations**: Full support for Create, Read, Update, and Delete operations for Classes, Students, and Subjects.
+-   **Attendance Tracking**: Logs and stores the entry/exit history of students and teachers.
+-   **Data Validation**: Uses Joi to ensure the integrity of input data.
+-   **Centralized Response Handling**: Custom middleware to standardize API responses and handle errors.
+-   **Pagination & Filtering**: Built-in for endpoints that return a list.
+
+### Built With
+
+-   [Node.js](https://nodejs.org/)
+-   [Express.js](https://expressjs.com/)
+-   [Prisma](https://www.prisma.io/)
+-   [SQLite](https://www.sqlite.org/index.html)
+
+---
+
+## 🚀 Getting Started
+
+Follow these steps to set up and run the project on your local machine.
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/) (v18 or later recommended)
+-   [Node.js](https://nodejs.org/) (v18 or later)
 -   [NPM](https://www.npmjs.com/) (comes with Node.js)
+-   [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) (optional, recommended)
 
-### Installation & Setup
+### Installation Guide
 
-1.  **Clone the repository:**
+1.  **Clone the repository**
     ```bash
     git clone <your-repository-url>
     cd BE
     ```
 
-2.  **Install dependencies:**
+2.  **Install dependencies**
     ```bash
     npm install
     ```
 
-3.  **Set up environment variables:**
-    Create a `.env` file in the root directory and add the following content. This file configures the database path, server port, and other necessary settings.
+3.  **Create the environment file (`.env`)**
+    Create a `.env` file in the root directory and copy the content below. This file configures the database, server port, and other services.
     ```env
-    # Database URL for Prisma (points to the db file in the root)
+    # Database URL for Prisma
     DATABASE_URL="file:./dev.db"
 
     # Server port
@@ -47,144 +83,121 @@ Follow these instructions to get the project up and running on your local machin
     AI_BASE_URL="http://localhost:8000"
     ```
 
-4.  **Setup the Database:**
-    These commands will create the SQLite database file and generate the Prisma Client based on your schema.
-
-    a. **Create the database file:**
-    First, create an empty database file named `dev.db` inside the `prisma` directory.
-
-    b. **Generate Prisma Client:**
-    This command reads your `schema.prisma` and generates the Prisma Client library tailored to your models.
-    ```bash
-    npx prisma generate
-    ```
-
-    c. **Push the schema to the database:**
-    This command will synchronize your database schema with your Prisma schema, creating the tables.
+4.  **Set up the database**
+    This command synchronizes your schema with the database, automatically creating the necessary tables.
     ```bash
     npx prisma db push
     ```
-    *Note: `db push` is great for prototyping. For production and team workflows that require tracking schema changes, consider using `npx prisma migrate dev`.*
+    > **Note**: `db push` is great for rapid prototyping. In a team or production environment, consider using `npx prisma migrate dev` to manage schema changes over time.
 
-5.  **(Optional) Seed the database:**
-    To populate the database with initial data for testing, run the seed script.
+5.  **(Optional) Seed the database**
+    To add sample data to the database, run:
     ```bash
     npm run seed
     ```
+    Or run a specific seed file:
+    ```bash
+    node prisma/subject.seed.js
+    ```
+
+---
+
+## 🏃‍♂️ Usage
 
 ### Running the Application
 
-To start the development server with live-reloading (thanks to `nodemon`), run:
+To start the server in development mode (with `nodemon` for auto-restarts), run:
 ```bash
 npm start
 ```
-The server will be available at `http://localhost:3000`.
+The server will be available at `http://localhost:5000` (based on the `.env` configuration).
 
-## Docker Support
+### API Endpoints
 
-This project includes a `Dockerfile` and a `docker-compose.yml` file to make it easy to build and run the application in a containerized environment.
+All API routes are defined within the `src/api/routes/` directory. All endpoints are prefixed with `/api`.
 
-### Method 1: Using Docker Compose (Recommended)
+-   `/api/classes`: Manage classes
+-   `/api/students`: Manage students
+-   `/api-subjects`: Manage subjects
+-   `/api/attendance`: Manage attendance
 
-Docker Compose is the recommended way to run the application as it simplifies the management of ports, environment variables, and volumes for data persistence.
+---
 
-**Start the application:**
-To build the image and start the container, run:
-```bash
-docker-compose up --build
-```
-To run in the background (detached mode), use:
-```bash
-docker-compose up -d --build
-```
+## 🐳 Docker
 
-**Stop the application:**
-To stop the container, run:
-```bash
-docker-compose down
-```
+This project is pre-configured to run with Docker, simplifying setup and deployment.
 
-The `docker-compose.yml` file is configured to automatically persist the data in `dev.db` and the `public/data` directory by mounting them as volumes.
+### Using Docker Compose (Recommended)
 
-### Method 2: Using Docker Manually
+This is the recommended method as it automatically manages the container, network, and volumes for data persistence.
 
-If you prefer not to use Docker Compose, you can build and run the container manually.
+-   **Start:** Build the image and launch the container.
+    ```bash
+    docker-compose up --build -d
+    ```
+-   **Stop:** Stop and remove the container.
+    ```bash
+    docker-compose down
+    ```
 
-**1. Build the Docker Image:**
-```bash
-docker build -t be-at2 .
-```
+### Using Docker Manually
 
-**2. Run the Docker Container:**
-```bash
-docker run -d -p 5000:5000 --name be-at2-container --env-file .env be-at2
-```
-*   **Note:** This manual method does not persist the database. Any data will be lost if the container is removed.
+-   **1. Build the image:**
+    ```bash
+    docker build -t be-at2 .
+    ```
+-   **2. Run the container:**
+    ```bash
+    docker run -d -p 5000:5000 --name be-at2-container --env-file .env be-at2
+    ```
+    > **Note**: This method does not persist data. All data will be lost when the container is removed.
 
-### Triển khai vào Docker Compose tổng
+### Template for Master Docker Compose
 
-Nếu bạn đang chạy nhiều service trên máy chủ và quản lý bằng một tệp `docker-compose.yml` tổng, bạn có thể sao chép đoạn mã dưới đây và dán vào tệp đó.
-
-**Lưu ý:** Bạn cần chỉnh sửa các đường dẫn (`build`, `env_file`, `volumes`) và tên `networks` cho phù hợp với cấu trúc thư mục và thiết lập trên máy chủ của bạn.
+To integrate this service into a larger `docker-compose.yml` file on a server, use the template below. **Note:** You must edit the paths and network names.
 
 ```yaml
-# --- Service cho BE-AT2 ---
+# --- Service for BE-AT2 ---
 services:
-  backend-at2: # Đặt một tên duy nhất cho service
-    build: ./path/to/your/BE-project # THAY ĐỔI: Đường dẫn đến thư mục project này
+  backend-at2: # Give the service a unique name
+    build: ./path/to/your/BE-project # CHANGE: Path to this project's directory
     container_name: be-at2-backend
     env_file:
-      - ./path/to/your/BE-project/.env # THAY ĐỔI: Đường dẫn đến tệp .env
+      - ./path/to/your/BE-project/.env # CHANGE: Path to the .env file
     volumes:
-      # Volume để lưu trữ database và các dữ liệu khác
-      # THAY ĐỔI: Đường dẫn bên trái dấu hai chấm (:) là đường dẫn trên máy chủ của bạn
+      # CHANGE: The path on the left is on your host machine
       - ./your-data/at2/dev.db:/app/dev.db
       - ./your-data/at2/public/data:/app/public/data
     networks:
-      - your-shared-network # THAY ĐỔI: Tên network chung của các service
+      - your-shared-network # CHANGE: The name of your shared network
     ports:
-      - "5000:5000" # THAY ĐỔI: Ánh xạ cổng nếu cần
+      - "5000:5000" # CHANGE: Map port if necessary
     restart: unless-stopped
-
-# ... các service khác của bạn ...
-
-# networks:
-#   your-shared-network:
-#     external: true # Hoặc định nghĩa network tại đây
 ```
 
-## Project Structure
+---
+
+## 📂 Project Structure
 
 ```
 /
-├── prisma/
-│   ├── migrations/       # Database migration history
-│   ├── dev.db            # Local SQLite database file
-│   ├── schema.prisma     # Prisma schema for database models
-│   └── seed.js           # Script to populate the database
+├── prisma/             # Contains schema, database, and seed files
+├── public/             # Contains static files (images, data)
 ├── src/
-│   ├── api/
-│   │   ├── controllers/  # Handles request/response logic
-│   │   ├── middlewares/  # Express middlewares (validation, error handling)
-│   │   ├── routes/       # API routes definition
-│   │   ├── services/     # Core business logic
-│   │   └── validations/  # Joi validation schemas
-│   ├── config/           # Project configuration (e.g., Prisma client)
-│   ├── helpers/          # Helper/utility functions
-│   └── server.js         # Main application entry point
-├── .env                  # Environment variables (local)
-├── CODING_RULES.md       # Project's coding standards
-├── package.json          # Project dependencies and scripts
-└── README.MD             # This file
+│   ├── api/            # Contains all API logic (routes, controllers, services)
+│   ├── config/         # Project configuration
+│   ├── helpers/        # Helper functions
+│   └── server.js       # Application entry point
+├── .env                # Environment variables file (ignored by Git)
+├── .gitignore          # Files and directories ignored by Git
+├── docker-compose.yml  # Docker Compose configuration
+├── Dockerfile          # Configuration for building the Docker image
+├── package.json        # Dependencies and scripts
+└── README.MD           # This documentation file
 ```
 
-## API Endpoints
+---
 
-The main API routes are defined in `src/api/routes/index.js`. All routes are prefixed with `/api`.
+## ⚖️ License
 
--   **Class Routes**: `/api/classes`
--   **Student Routes**: `/api/students` (To be implemented)
--   **Subject Routes**: `/api/subjects` (To be implemented)
--   **Attendance Routes**: `/api/attendance` (To be implemented)
-
-For detailed API testing and interaction, you can use the `.http` files in the `/api` directory with a compatible REST client (like the VS Code REST Client extension).
+This project is distributed under the ISC License. See `package.json` for more information.

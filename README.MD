@@ -61,7 +61,7 @@ Follow these steps to set up and run the project on your local machine.
 
 1.  **Clone the repository**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/leetrunghaau/AT_BE.git
     cd BE
     ```
 

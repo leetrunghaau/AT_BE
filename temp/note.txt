@@ -1,9 +1,0 @@
-Frontend (Next.js)
-      ↓ POST /api/recognize
-Node.js (Express)
-      ↓ POST http://localhost:5001/embedding
-Python service (Flask/FastAPI)
-      ↓ InsightFace / MobileFaceNet ONNX
-      ↓ return embedding
-Node.js trả dữ liệu về cho FE
-    

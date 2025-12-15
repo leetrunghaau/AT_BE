@@ -46,7 +46,7 @@ async function main() {
 
   const createdSubjects = await prisma.subject.createMany({
     data: subjectsToCreate,
-    skipDuplicates: true, // Bỏ qua nếu id đã tồn tại
+
   });
 
   console.log(`Seeding hoàn tất.`);

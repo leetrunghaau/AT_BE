@@ -31,12 +31,13 @@ function responseHandler(req, res, next) {
 };
 
 const errorHandler = async (err, req, res, next) => {
+  console.error("================");
   console.error(err);
 
   if (err.code === 'P2002') {
     return res.status(409).json({
       status: 409,
-      message: `Duplicate value for field(s): ${err.meta.target.join(', ')}`
+      message: `giá trị của ${err.meta.target.join(', ')} đã tồn tại. Vui lòng xóa bản ghi cũ và thêm lại.`
     });
   }
   if (err.code === 'P2003') {
@@ -48,7 +49,7 @@ const errorHandler = async (err, req, res, next) => {
   if (err.code === 'P2025') {
     return res.status(404).json({
       status: 404,
-      message: 'Record not found'
+      message: 'Không tìm thấy bản ghi'
     });
   }
   const statusCode = err.statusCode || 500;

@@ -3,6 +3,7 @@ const StudentService = require("@services/student.service.js");
 const { storeDir, saveImages } = require("@/helpers/file");
 const faceService = require("../services/face.service");
 const createError = require('http-errors');
+const { Status } = require("@prisma/client");
 
 class StudentController {
   async create(req, res, next) {
@@ -40,9 +41,40 @@ class StudentController {
   async logs(req, res, next) {
     try {
       const { p, l, s, date, classId } = req.useQuery;
-      const students = await StudentService.logs(p,l,new Date(date),classId,s);
-      const meta = await StudentService.getMeta()
-      res.ok(students, meta);
+      const students = await StudentService.logs(
+        p,
+        l,
+        new Date(date),
+        classId,
+        s
+      );
+      const lastLogs = new Set();
+      (await StudentService.lastLog(students.map(s => s.id)))
+        .forEach(log => {
+          console.log(log)
+          if (log.studentLogs.length > 0 && log.studentLogs[0].direction == "IN")
+            lastLogs.add(log.studentLogs[0].studentId)
+        })
+      const meta = await StudentService.getMeta(new Date(date), classId, s)
+      console.log("set ==========")
+      console.log(new Date(date))
+      console.log(students)
+      const rs = students.map(student => {
+        const statusSet = new Set(student.studentAttendants.map(a => a.status));
+        const status = ( (new Date(date)) > (new Date()) || student.schoolClass.timetableEntries.length == 0 ) ? null
+          : !statusSet.size
+            ? "absent"
+            : statusSet.has("absent") && statusSet.size === 1
+              ? "excused"
+              : ["late", "present"].find(s => statusSet.has(s)) ?? "absent";
+        const inClass = lastLogs.has(student.id)
+        return {
+          ...student,
+          status,
+          inClass
+        };
+      });
+      res.ok(rs, meta);
     } catch (error) {
       next(error);
     }
@@ -96,7 +128,6 @@ class StudentController {
         await StudentService.update(student.id, { trained: true })
         return res.ok({ ...student, trained: true });
       }
-
       return next(createError.BadRequest("Lỗi "));;
     } catch (err) {
       next(err);

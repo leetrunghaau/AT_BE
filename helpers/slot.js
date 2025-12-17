@@ -18,8 +18,9 @@ const forSession = (now) => {
         return nowMinutes >= start && nowMinutes <= end;
     });
     if (current) return current;
-    return SESSION_PERIODS.find(session => nowMinutes < time2Minutes(session[0].start)) || null;
+    return SESSION_PERIODS.find(session => nowMinutes < time2Minutes(session[0].start)) || [];
 };
+
 
 
 module.exports = {

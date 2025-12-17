@@ -1,5 +1,7 @@
 const { dateTime2Date, getWeekNumber, generateMissingWeeks, date2DateTime } = require("@/helpers/date");
 const scheduleService = require("@services/schedule.service.js");
+const teacherService = require("../services/teacher.service");
+const prisma = require("@/helpers/prisma.client");
 
 class ScheduleController {
   async create(req, res, next) {
@@ -105,6 +107,42 @@ class ScheduleController {
     }
   }
 
+  async teachers(req, res, next) {
+    try {
+      const {
+        subjectId,
+        startDate,
+        endDate,
+        teacherId,
+        dayOfWeek,
+        period,
+      } = req.useQuery
+      const teachers = await prisma.teacher.findMany({
+        where: {
+          subjects: {
+            some: { id: subjectId },
+          },
+          timetableEntries: {
+            none: {
+              dayOfWeek: dayOfWeek,
+              period: period,
+              AND: [
+                { startDate: { lte: new Date(endDate) } },
+                { endDate: { gte: new Date(startDate) } },
+              ],
+              NOT: {teacherId}
+            },
+            
+          },
+        },
+        include: { subjects: true }
+      })
+
+      res.ok(teachers)
+    } catch (error) {
+      next(error);
+    }
+  }
 
   async update(req, res, next) {
     try {
@@ -116,20 +154,64 @@ class ScheduleController {
     }
   }
   async modify(req, res, next) {
+    console.log("\n================= MODIFY TIMETABLE =================");
+
     try {
+      // 1️⃣ Log request đầu vào
       const { id } = req.useParams;
+
+      console.log("📥 REQUEST");
+      console.log({
+        id,
+        body: req.body,
+      });
+
+      // 2️⃣ Check conflict
+      console.log("\n🔍 STEP 1: CHECK SWAP");
       const conflict = await scheduleService.checkSwap(id, req.body);
+
       if (conflict) {
+        console.warn("⚠️ CONFLICT DETECTED");
+        console.table({
+          currentId: id,
+          conflictId: conflict.id,
+          classId: conflict.classId,
+          dayOfWeek: conflict.dayOfWeek,
+          period: conflict.period,
+          startDate: conflict.startDate,
+          endDate: conflict.endDate,
+        });
+
+        // 3️⃣ Swap
+        console.log("\n🔁 STEP 2: SWAP SCHEDULE");
         const result = await scheduleService.swap(id, conflict.id);
+
+        console.log("✅ SWAP SUCCESS");
+        console.table(result);
+
+        console.log("====================================================\n");
         return res.ok(result);
       }
+
+      // 4️⃣ Update bình thường
+      console.log("\n✏️ STEP 2: UPDATE SCHEDULE");
       const updated = await scheduleService.update(id, req.body);
+
+      console.log("✅ UPDATE SUCCESS");
+      console.table(updated);
+
+      console.log("====================================================\n");
       return res.ok(updated);
 
     } catch (err) {
+      console.error("❌ MODIFY ERROR");
+      console.error(err);
+
+      console.log("====================================================\n");
       next(err);
     }
   }
+
 
 
   async delete(req, res, next) {

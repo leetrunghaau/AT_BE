@@ -25,7 +25,7 @@ class AttendanceService {
 
     const logsDate = await studentLogService.logsOfDate(id, now);
     if (checkDupLog(logsDate, now, direction)) {
-      return { ...rs, timeTemp: logsDate[0].logTime, feedback: "Bạn đã điểm danh" };
+      return { ...rs, timeTemp: logsDate[0].logTime, feedback: direction == "IN" ? "Bạn đã điểm danh" :"Bạn đã Check out" };
     }
 
     if (direction === "IN") {
@@ -81,11 +81,11 @@ class AttendanceService {
     if (!attendanced) {
       await studentAttendenceService.create({ id: await createUuidv7(), studentId: student.id, status, timeTemp: now })
     } else {
-      const periodSet = new Set(forSession(now).map(s => s.period))
-      !schedules.some(s => periodSet.has(s.period))
-      if (status == "late" && attendanced.status == "present") {
-        await studentAttendenceService.update(attendanced.id, { status: "late" })
-      }
+      // const periodSet = new Set(forSession(now).map(s => s.period))
+      // !schedules.some(s => periodSet.has(s.period))
+      // if (status == "late" && attendanced.status == "present") {
+      //   await studentAttendenceService.update(attendanced.id, { status: "late" })
+      // }
     }
 
     await studentLogService.create({

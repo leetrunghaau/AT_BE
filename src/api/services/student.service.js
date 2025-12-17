@@ -3,31 +3,47 @@ const { buildWhere, buildPagination } = require("@/helpers/prisma.query")
 const createError = require('http-errors');
 
 class StudentService {
-  async getMeta() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    const total = await prisma.student.count();
-    const stats = await prisma.studentAttendant.groupBy({
-      by: ['status'],
-      _min: {
-        status: true,
-      },
-      _count: {
-        status: true
-      },
-      where: {
-        timeTemp: { gte: start, lte: end }
-      },
+  async getMeta(now = new Date(), classId = null, s = null) {
+    const startOfDate = new Date(now);
+    startOfDate.setHours(0, 0, 0, 0);
 
+    const endOfDate = new Date(now);
+    endOfDate.setHours(23, 59, 59, 999);
+
+    const where = {};
+    if (s) where.name = { contains: s };
+    if (classId) where.classId = classId;
+
+
+    const atts = await prisma.student.findMany({
+      where,
+      select: {
+        studentAttendants: {
+          where: {
+            timeTemp: {
+              gte: startOfDate,
+              lte: endOfDate,
+            },
+          },
+          select: { status: true }
+        }
+      }
     })
-    const result = { present: 0, absent: 0, late: 0 };
-    stats.forEach(s => {
-      result[s.status] = s._count.status;
-    });
 
-    return { total, ...result };
+    const total = atts.length;
+
+    const stats = atts.reduce((acc, att) => {
+      const s = (() => {
+        const set = new Set(att.studentAttendants.map(a => a.status));
+        if (!set.size) return "absent";
+        if (set.size === 1 && set.has("absent")) return "excused";
+        return ["late", "present"].find(x => set.has(x)) ?? "absent";
+      })();
+      acc[s] = (acc[s] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { total, ...stats };
   }
 
   async create(data) {
@@ -53,13 +69,17 @@ class StudentService {
 
   async logs(page = 1, limit = 10, now = new Date(), classId = null, s = null) {
     const { skip, take } = buildPagination(page, limit);
+
     const startOfDate = new Date(now);
     startOfDate.setHours(0, 0, 0, 0);
+
     const endOfDate = new Date(now);
     endOfDate.setHours(23, 59, 59, 999);
+
     const where = {};
-    if (s) where.name = { contains: s }
-    if (classId) where.classId = classId
+    if (s) where.name = { contains: s };
+    if (classId) where.classId = classId;
+
     return await prisma.student.findMany({
       skip,
       take,
@@ -72,7 +92,7 @@ class StudentService {
               lte: endOfDate,
             },
           },
-          orderBy: { logTime: "asc" } // (tuỳ chọn)
+          orderBy: { logTime: "asc" },
         },
         studentAttendants: {
           where: {
@@ -88,19 +108,40 @@ class StudentService {
               where: {
                 dayOfWeek: now.getDay() || 7,
                 startDate: { lte: now },
-                endDate: { gte: now }
+                endDate: { gte: now },
               },
               include: {
                 subject: true,
-                teacher: true
-              }
-
-            }
-          }
-        }
+                teacher: true,
+              },
+            },
+          },
+        },
       },
-    });
+    })
   }
+
+  async lastLog(ids =[]) {
+
+    return await prisma.student.findMany({
+      where:{
+        id: {in : ids}
+      },
+      select: {
+        studentLogs: {
+          take: 1,
+          orderBy: { logTime: "desc" },
+          select: {
+            studentId: true,
+            direction: true,
+            logTime: true
+          }
+        },
+
+      }
+    })
+  }
+
   // async gets(page = 1, limit = 10, filters = {}) {
   //   const { skip, take } = buildPagination(page, limit);
   //   const where = buildWhere(filters);

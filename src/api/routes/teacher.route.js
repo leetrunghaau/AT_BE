@@ -3,9 +3,10 @@ const router = express.Router();
 const validate = require("@mids/validation.middleware.js");
 const { querySchema } = require("@valis/query.validation.js");
 const TeacherController = require("@controls/teacher.controller.js");
-const { id , create, creates, update} = require("@valis/teacher.validation.js");
+const { id , create, creates, update, logs} = require("@valis/teacher.validation.js");
 
 router.get("/", validate(querySchema, "query"), TeacherController.getAll);
+router.get("/logs", validate(logs, "query"), TeacherController.logs);
 router.get("/:id", validate(id, "params"), TeacherController.getById);
 router.post("/", validate(create), TeacherController.create);
 router.post("/bulk", validate(creates), TeacherController.createBulk);

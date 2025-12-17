@@ -3,29 +3,45 @@ const { buildWhere, buildPagination } = require("@/helpers/prisma.query.js");
 const createError = require('http-errors');
 
 class TeacherService {
+    async getMeta(now = new Date(), s = null) {
+        const startOfDate = new Date(now);
+        startOfDate.setHours(0, 0, 0, 0);
 
-    async getMeta() {
-        const now = new Date();
-       
-        const total = await prisma.teacher.count();
-        const totalSubject = await prisma.subject.count({
-            where: {
-                teachers: {
-                    some: {}
+        const endOfDate = new Date(now);
+        endOfDate.setHours(23, 59, 59, 999);
+
+        const where = {};
+        if (s) where.name = { contains: s };
+
+        const atts = await prisma.teacher.findMany({
+            where,
+            select: {
+                teacherAttendants: {
+                    where: {
+                        timeTemp: {
+                            gte: startOfDate,
+                            lte: endOfDate,
+                        },
+                    },
+                    select: { status: true }
                 }
             }
-        });;
-        const totalLession = await prisma.timetableEntry.count({
-            where: {
-                startDate: {
-                    lte: now,
-                },
-                endDate: {
-                    gte: now
-                }
-            }
-        });
-        return { total, totalSubject, totalLession }
+        })
+
+        const total = atts.length;
+
+        const stats = atts.reduce((acc, att) => {
+            const s = (() => {
+                const set = new Set(att.teacherAttendants.map(a => a.status));
+                if (!set.size) return "absent";
+                if (set.size === 1 && set.has("absent")) return "excused";
+                return ["late", "present"].find(x => set.has(x)) ?? "absent";
+            })();
+            acc[s] = (acc[s] || 0) + 1;
+            return acc;
+        }, {});
+
+        return { total, ...stats };
     }
     async create(data) {
         const { subjects, ...teacherData } = data;
@@ -80,6 +96,78 @@ class TeacherService {
             }
         });
     }
+
+
+    async logs(page = 1, limit = 10, now = new Date(), classId = null, s = null) {
+        const { skip, take } = buildPagination(page, limit);
+
+        const startOfDate = new Date(now);
+        startOfDate.setHours(0, 0, 0, 0);
+
+        const endOfDate = new Date(now);
+        endOfDate.setHours(23, 59, 59, 999);
+
+        const where = {};
+        if (s) where.name = { contains: s };
+        return await prisma.teacher.findMany({
+            skip,
+            take,
+            where,
+            include: {
+                teacherLogs: {
+                    where: {
+                        logTime: {
+                            gte: startOfDate,
+                            lte: endOfDate,
+                        },
+                    },
+                    orderBy: { logTime: "asc" },
+                },
+                teacherAttendants: {
+                    where: {
+                        timeTemp: {
+                            gte: startOfDate,
+                            lte: endOfDate,
+                        },
+                    },
+                },
+                timetableEntries: {
+                    where: {
+                        dayOfWeek: now.getDay() || 7,
+                        startDate: { lte: now },
+                        endDate: { gte: now },
+                    },
+                    include: {
+                        subject: true,
+                        schoolClass: true,
+                    },
+                    orderBy: { period: "asc" },
+                },
+            },
+        })
+    }
+
+    async lastLog(ids = []) {
+
+        return await prisma.teacher.findMany({
+            where: {
+                id: { in: ids }
+            },
+            select: {
+                teacherLogs: {
+                    take: 1,
+                    orderBy: { logTime: "desc" },
+                    select: {
+                        teacherId: true,
+                        direction: true,
+                        logTime: true
+                    }
+                },
+
+            }
+        })
+    }
+
     async getById(id) {
         const rs = await prisma.teacher.findUnique({
             where: { id }, include: {

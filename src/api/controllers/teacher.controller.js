@@ -27,14 +27,60 @@ class TeacherController {
 
   async getAll(req, res, next) {
     try {
-      const { p, l } = req.useQuery
-      const teachers = await TeacherService.getAll(p, l)
+      const { p, l, s } = req.useQuery
+      const teachers = await TeacherService.getAll(p, l, {name: s})
       const meta = await TeacherService.getMeta()
       res.ok(teachers, meta)
     } catch (error) {
       next(error);
     }
   }
+
+
+
+  async logs(req, res, next) {
+    try {
+      const { p, l, s, date } = req.useQuery;
+      const teachers = await TeacherService.logs(
+        p,
+        l,
+        new Date(date),
+        s
+      );
+      const meta = await TeacherService.getMeta(
+        new Date(date),
+        s
+      );
+
+      const rs = teachers.map(teacher => {
+        const statusSet = new Set(
+          teacher.teacherAttendants.map(a => a.status)
+        );
+
+        const status = ((new Date(date)) > (new Date()) || teacher.timetableEntries.length == 0) ? null :
+          !statusSet.size
+            ? "absent"
+            : statusSet.has("absent") && statusSet.size === 1
+              ? "excused"
+              : ["late", "present"].find(s => statusSet.has(s)) ?? "absent";
+
+        const inClass =
+          teacher.teacherLogs.length > 0 &&
+          teacher.teacherLogs.at(-1).direction === "IN";
+
+        return {
+          ...teacher,
+          status,
+          inClass
+        };
+      });
+
+      res.ok(rs, meta);
+    } catch (error) {
+      next(error);
+    }
+  }
+
 
   async getById(req, res, next) {
     try {

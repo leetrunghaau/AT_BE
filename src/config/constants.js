@@ -14,6 +14,14 @@ const SESSION_PERIODS = [
   ]
 ];
 
+const PRIORITY = {
+  PRESENT: 3,
+  LATE: 2,
+  ABSENT: 1,
+  CUT_CLASS: 0,
+};
+
+
 const LESSON_PERIODS = SESSION_PERIODS.flat();
 
 const AI_BASE_URL = process.env.AI_BASE_URL
@@ -32,5 +40,6 @@ module.exports = {
   LESSON_PERIODS,
   SESSION_PERIODS,
   AI_ENDPOINTS,
-  TIME_RULE
+  TIME_RULE,
+  PRIORITY
 };

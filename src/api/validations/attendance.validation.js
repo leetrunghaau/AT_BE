@@ -1,26 +1,27 @@
 const Joi = require('joi');
 const { Direction } = require('@prisma/client');
+const { p, l, s, uv7, vDate, studentId } = require('@/helpers/validate');
 
 const create = Joi.object({
-  studentId: Joi.string().guid({ version: ['uuidv7'] }),
-  classMeetingId: Joi.string().guid({ version: ['uuidv7'] }),
+  studentId: studentId,
+  classMeetingId: uv7,
   direction: Joi.string().valid(...Object.values(Direction)).required(),
   timestamp: Joi.date().iso().optional(),
 });
 
 const listByClass = Joi.object({
-  id: Joi.string().guid({ version: ['uuidv7'] }),
+  id: uv7.label("Mã lớp học"),
 });
 
 const listByStudent = Joi.object({
-  studentId: Joi.string().guid({ version: ['uuidv7'] }),
+  studentId: studentId,
 });
 const studentQuery = Joi.object({
-  p: Joi.number().integer().allow(null | undefined).min(1).default(1),
-  l: Joi.number().integer().allow(null | undefined).min(1).default(10),
-  s: Joi.string().allow(null, '').optional().default(null),
-  classId: Joi.string().guid({ version: ['uuidv7'] }).optional(),
-  date: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required(),
+  p: p,
+  l: l,
+  s: s,
+  classId: uv7.label("Mã lớp học").optional(),
+  date: vDate.label("Ngày"),
 });
 
 

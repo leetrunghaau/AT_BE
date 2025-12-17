@@ -101,36 +101,154 @@ class ScheduleService {
 
 
   async checkSwap(id, data) {
-    const currentItem = await prisma.timetableEntry.findUnique({ where: { id } });
-    if (!currentItem) throw new Error("Item not found");
+    console.log("\n================= CHECK SWAP =================");
 
-    return await prisma.timetableEntry.findFirst({
+    // 1️⃣ Lấy item hiện tại
+    const currentItem = await prisma.timetableEntry.findUnique({
+      where: { id },
+    });
+
+    if (!currentItem) {
+      console.error("❌ Item not found:", id);
+      throw new Error("Item not found");
+    }
+
+    // 2️⃣ Chuẩn hóa thời gian (RẤT QUAN TRỌNG)
+    const start = new Date(currentItem.startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(currentItem.endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // 3️⃣ Log dữ liệu đầu vào
+    console.log("📌 CURRENT ITEM");
+    console.table({
+      id: currentItem.id,
+      classId: currentItem.classId,
+      dayOfWeek: currentItem.dayOfWeek,
+      period: currentItem.period,
+      startDate: currentItem.startDate,
+      endDate: currentItem.endDate,
+    });
+
+    console.log("📌 NORMALIZED RANGE");
+    console.log({
+      start: start.toISOString(),
+      end: end.toISOString(),
+    });
+
+    console.log("📌 TARGET SLOT");
+    console.log({
+      dayOfWeek: data.dayOfWeek,
+      period: data.period,
+    });
+
+    // 4️⃣ Query tìm slot trùng
+    const conflict = await prisma.timetableEntry.findFirst({
       where: {
         classId: currentItem.classId,
         dayOfWeek: data.dayOfWeek,
         period: data.period,
         NOT: { id },
+        AND: [
+          { startDate: { lte: end } },
+          {
+            OR: [
+              { endDate: null },
+              { endDate: { gte: start } },
+            ],
+          },
+        ],
       },
-    }) || null;
-  }
-  async swap(id1, id2) {
-    return await prisma.$transaction(async (tx) => {
-      const items = await tx.timetableEntry.findMany({
-        where: { id: { in: [id1, id2] } }
+    });
+
+    // 5️⃣ Log kết quả
+    if (conflict) {
+      console.warn("⚠️ CONFLICT FOUND");
+      console.table({
+        id: conflict.id,
+        classId: conflict.classId,
+        dayOfWeek: conflict.dayOfWeek,
+        period: conflict.period,
+        startDate: conflict.startDate,
+        endDate: conflict.endDate,
       });
 
-      if (items.length !== 2) throw new Error("Item not found for swap");
+      console.log("📌 OVERLAP CHECK");
+      console.log({
+        "conflict.start <= current.end": conflict.startDate <= end,
+        "conflict.end >= current.start":
+          conflict.endDate ? conflict.endDate >= start : "endDate is NULL",
+      });
+    } else {
+      console.log("✅ NO CONFLICT FOUND");
+    }
+
+    console.log("================================================\n");
+
+    return conflict || null;
+  }
+  async swap(id1, id2) {
+    console.log("\n================= SWAP TIMETABLE =================");
+    console.log("🔁 SWAP REQUEST", { id1, id2 });
+
+    return await prisma.$transaction(async (tx) => {
+      // 1️⃣ Lấy 2 item
+      console.log("\n📥 STEP 1: FETCH ITEMS");
+      const items = await tx.timetableEntry.findMany({
+        where: { id: { in: [id1, id2] } },
+      });
+
+      console.log("📌 FETCH RESULT COUNT:", items.length);
+      console.table(
+        items.map(i => ({
+          id: i.id,
+          classId: i.classId,
+          dayOfWeek: i.dayOfWeek,
+          period: i.period,
+          startDate: i.startDate,
+          endDate: i.endDate,
+        }))
+      );
+
+      if (items.length !== 2) {
+        console.error("❌ Item not found for swap");
+        throw new Error("Item not found for swap");
+      }
 
       const [item1, item2] = items;
 
+      // 2️⃣ Giải phóng slot item1 (tránh unique/overlap)
+      console.log("\n🧹 STEP 2: TEMP CLEAR ITEM 1");
+      console.log({
+        id: item1.id,
+        from: { dayOfWeek: item1.dayOfWeek, period: item1.period },
+        to: { dayOfWeek: -1, period: -1 },
+      });
+
       await tx.timetableEntry.update({
         where: { id: item1.id },
-        data: { dayOfWeek: -1, period: -1 }
+        data: { dayOfWeek: -1, period: -1 },
+      });
+
+      // 3️⃣ Gán slot item1 cho item2
+      console.log("\n🔄 STEP 3: MOVE ITEM 2");
+      console.log({
+        id: item2.id,
+        from: { dayOfWeek: item2.dayOfWeek, period: item2.period },
+        to: { dayOfWeek: item1.dayOfWeek, period: item1.period },
       });
 
       await tx.timetableEntry.update({
         where: { id: item2.id },
-        data: { dayOfWeek: item1.dayOfWeek, period: item1.period }
+        data: { dayOfWeek: item1.dayOfWeek, period: item1.period },
+      });
+
+      // 4️⃣ Gán slot item2 cho item1
+      console.log("\n🔄 STEP 4: MOVE ITEM 1");
+      console.log({
+        id: item1.id,
+        to: { dayOfWeek: item2.dayOfWeek, period: item2.period },
       });
 
       const swappedItem1 = await tx.timetableEntry.update({
@@ -138,17 +256,36 @@ class ScheduleService {
         data: { dayOfWeek: item2.dayOfWeek, period: item2.period },
         include: {
           subject: true,
-          teacher: true
-        }
+          teacher: true,
+        },
       });
+
+      // 5️⃣ Lấy item2 sau swap
+      console.log("\n📤 STEP 5: FETCH ITEM 2 AFTER SWAP");
 
       const swappedItem2 = await tx.timetableEntry.findUnique({
         where: { id: item2.id },
         include: {
           subject: true,
-          teacher: true
-        }
+          teacher: true,
+        },
       });
+
+      console.log("\n✅ SWAP SUCCESS");
+      console.table([
+        {
+          id: swappedItem1.id,
+          dayOfWeek: swappedItem1.dayOfWeek,
+          period: swappedItem1.period,
+        },
+        {
+          id: swappedItem2.id,
+          dayOfWeek: swappedItem2.dayOfWeek,
+          period: swappedItem2.period,
+        },
+      ]);
+
+      console.log("=================================================\n");
 
       return [swappedItem1, swappedItem2];
     });

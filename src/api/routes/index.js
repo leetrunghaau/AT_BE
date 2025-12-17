@@ -9,6 +9,7 @@ const teacherRoutes = require('./teacher.route.js');
 const scheduleRoutes = require('./schedule.route');
 const driverRoutes = require('./driver.route');
 const attendance = require('./attendance.route.js');
+const test = require('./test.route.js');
 
 // Gắn các route riêng lẻ vào router chính
 // router.use('/attendance', attendanceRoutes);
@@ -19,5 +20,6 @@ router.use('/teachers', teacherRoutes);
 router.use('/schedules', scheduleRoutes);
 router.use('/drivers', driverRoutes);
 router.use('/attendance', attendance);
+router.use('/test', test);
 
 module.exports = router;
